@@ -311,8 +311,10 @@ func (p *EthereumParser) PackTx(tx *bchain.Tx, height uint32, blockTime int64) (
 		if pt.Receipt.GasUsed, err = hexDecodeBig(r.Receipt.GasUsed); err != nil {
 			return nil, errors.Annotatef(err, "GasUsed %v", r.Receipt.GasUsed)
 		}
-		if pt.Receipt.Status, err = hexDecodeBig(r.Receipt.Status); err != nil {
-			return nil, errors.Annotatef(err, "Status %v", r.Receipt.Status)
+		if r.Receipt.Status != "" {
+			if pt.Receipt.Status, err = hexDecodeBig(r.Receipt.Status); err != nil {
+				return nil, errors.Annotatef(err, "Status %v", r.Receipt.Status)
+			}
 		}
 		ptLogs := make([]*ProtoCompleteTransaction_ReceiptType_LogType, len(r.Receipt.Logs))
 		for i, l := range r.Receipt.Logs {
@@ -379,9 +381,13 @@ func (p *EthereumParser) UnpackTx(buf []byte) (*bchain.Tx, uint32, error) {
 				Topics:  topics,
 			}
 		}
+		status := ""
+		if len(pt.Receipt.Status) > 0 {
+			status = hexEncodeBig(pt.Receipt.Status)
+		}
 		rr = &rpcReceipt{
 			GasUsed: hexEncodeBig(pt.Receipt.GasUsed),
-			Status:  hexEncodeBig(pt.Receipt.Status),
+			Status:  status,
 			Logs:    logs,
 		}
 	}
